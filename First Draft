@@ -1,0 +1,102 @@
+"""
+Author: Arnav Kumar
+Date: 09/05/2025
+Purpose: To create a maths game to educate students.
+"""
+
+import random
+from tkinter import *
+from tkinter import PhotoImage
+
+num = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+
+def introduction_window():
+    introduction_window = Toplevel(app)
+    error_window.title("Error Window")
+    error_window.geometry("200x150")
+    error_window.resizable(False, False)
+
+def error_window(error_message):
+    error_window = Toplevel(app)
+    error_window.title("Error Window")
+    error_window.geometry("200x150")
+    error_window.resizable(False, False)
+
+    error_window = Label(error_window, text = "", fg = "red", font = ("Times New Roman", 16))
+    error_window.config(text=error_message)
+    error_window.place(relx = 0.4, rely = 0.1)
+
+def submt(user_entry):
+    user_input = user_entry.get()
+
+    validity = validator(user_input)
+
+    if validity == True:
+        if user_input == str(resultPlus()):
+            correct = Label(app, text = "Correct!", fg = "green", font = ("Times New Roman", 16))
+            correct.place(relx = 0.4, rely = 0.2)
+        else:
+            wrong = Label(app, text = "Wrong!", fg = "red", font = ("Times New Roman", 16))
+            wrong.place(relx = 0.4, rely = 0.2)
+
+def validator(user_input):
+    # Blanks
+    if user_input == "":
+        blank = Label(app, text = "Blank!", fg = "red", font = ("Times New Roman", 16))
+        blank.place(relx = 0.4, rely = 0.1)
+        
+    # Alphabet, Whitespace, and Symbols
+    elif user_input.isdigit() == False:
+        if user_input.isalnum() == True:
+            error_window("Alphabet!")
+            
+        elif " " in user_input:
+            error_window("Whitespace!")
+            
+        else:
+            error_window("Symbols!")
+            
+    # Boundaries
+    elif len(user_input) > 6:
+        error_window("Upper Limit!")
+
+    else:
+        return True
+    return False
+
+def try_again():
+    try_again.num1update = random.choice(num)
+    try_again.num2update = random.choice(num)
+    question = Label(
+        app, text = f"{try_again.num1update}+{try_again.num2update}", font = ("Times New Roman", 16)
+    )
+    question.place(relx = 0.16, rely = 0.14, relwidth = 0.7, relheight = 0.23)
+
+def resultPlus():
+    try_again
+
+    return try_again.num1update + try_again.num2update
+
+app = Tk()
+app.title("Maths Quiz")
+app.geometry("300x400")
+app.resizable(True, True)
+
+start = Button(app, text = "Begin Adventure", bg = "blue", fg = "white", font = "50", command = try_again)
+start.place(relx = 0.33, rely = 0.2, relwidth = 0.4, relheight = 0.15)
+
+#button_img = PhotoImage(file="Start_Button.png")  # Replace with your image path
+#cool_button = Button(app, image = button_img)
+#cool_button.place(relx = 0.33, rely = 0.2, relwidth = 0.34, relheight = 0.23)
+
+
+solving = Entry(app, font = ("Times New Roman", 25) )
+solving.place(relx = 0.35, rely = 0.4, relwidth = 0.34, relheight = 0.23)
+
+submit = Button(app, text = "Submit", command = lambda: submt(solving))
+submit.place(relx = 0.35, rely = 0.64, relwidth = 0.34, relheight = 0.23)
+
+try_again = Button(app, text = "Try Again", command = try_again)
+try_again.place(relx = 0.43, rely = 0.9)
+
+app.mainloop()
