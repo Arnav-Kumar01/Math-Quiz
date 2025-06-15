@@ -1,102 +1,132 @@
 """
+Project Name: Maths Quiz
 Author: Arnav Kumar
-Date: 09/05/2025
-Purpose: To create a maths game to educate students.
+Date Created: 11/06/2025
+Last Modified: 12/06/2025
+Description: This is a program to help students learn and practice maths.
+Language Used: Python 3.10
+Files Required: None
+Known Issues: None
 """
 
-import random
 from tkinter import *
-from tkinter import PhotoImage
+import tkinter as tk
+import random
+import re
+from tkinter import messagebox
 
-num = [1, 2, 3, 4, 5, 6, 7, 8, 9]
+def create_instructions_window():
+    global name_entry
+    
+    header_label = Label(instructions_window, text = "Maths Quiz", font = ("Times New Roman", 30))
+    header_label.pack(pady = 20)
 
-def introduction_window():
-    introduction_window = Toplevel(app)
-    error_window.title("Error Window")
-    error_window.geometry("200x150")
-    error_window.resizable(False, False)
+    instruction_label = Label(instructions_window, text = "Try your best to answer all the questions!", font = ("Times New Roman", 14))
+    instruction_label.pack(pady = 30)
 
-def error_window(error_message):
-    error_window = Toplevel(app)
-    error_window.title("Error Window")
-    error_window.geometry("200x150")
-    error_window.resizable(False, False)
+    name_label = Label(instructions_window, text = "What is your name?", font = ("Times New Roman", 14))
+    name_label.pack(pady = 10)
+    
+    name_entry = Entry(instructions_window, justify = "center", font = ("Times New Roman", 14))
+    name_entry.pack(pady = 10)
+    
+    start_button = Button(instructions_window, text = "Start", command = create_difficulty_window, font = ("Times New Roman", 18), width = 10, height = 1)
+    start_button.pack(pady = 10)
 
-    error_window = Label(error_window, text = "", fg = "red", font = ("Times New Roman", 16))
-    error_window.config(text=error_message)
-    error_window.place(relx = 0.4, rely = 0.1)
+    quit_button = Button(instructions_window, text = "Quit", command = exit_button, font = ("Times New Roman", 18), width = 10, height = 1)
+    quit_button.pack(pady = 10)
 
-def submt(user_entry):
-    user_input = user_entry.get()
 
-    validity = validator(user_input)
+def create_difficulty_window():
+    difficulty_window.deiconify()
+    instructions_window.withdraw()
+    
+    difficulty_header_label = Label(difficulty_window, text = "Difficulty", font = ("Times New Roman", 30))
+    difficulty_header_label.pack(pady = 20)
 
-    if validity == True:
-        if user_input == str(resultPlus()):
-            correct = Label(app, text = "Correct!", fg = "green", font = ("Times New Roman", 16))
-            correct.place(relx = 0.4, rely = 0.2)
-        else:
-            wrong = Label(app, text = "Wrong!", fg = "red", font = ("Times New Roman", 16))
-            wrong.place(relx = 0.4, rely = 0.2)
+    difficulty_label = Label(difficulty_window, text = "Which difficulty would you like to choose!", font = ("Times New Roman", 14))
+    difficulty_label.pack(pady = 30)
 
-def validator(user_input):
-    # Blanks
-    if user_input == "":
-        blank = Label(app, text = "Blank!", fg = "red", font = ("Times New Roman", 16))
-        blank.place(relx = 0.4, rely = 0.1)
-        
-    # Alphabet, Whitespace, and Symbols
-    elif user_input.isdigit() == False:
-        if user_input.isalnum() == True:
-            error_window("Alphabet!")
-            
-        elif " " in user_input:
-            error_window("Whitespace!")
-            
-        else:
-            error_window("Symbols!")
-            
-    # Boundaries
-    elif len(user_input) > 6:
-        error_window("Upper Limit!")
+    basic_button = Button(difficulty_window, text = "Basic", command = basic_questions, font = ("Times New Roman", 18), width = 10, height = 1)
+    basic_button.pack(pady = 10)
 
+    advanced_button = Button(difficulty_window, text = "Advanced", font = ("Times New Roman", 18), width = 10, height = 1)
+    advanced_button.pack(pady = 10)
+
+    expert_button = Button(difficulty_window, text = "Expert", font = ("Times New Roman", 18), width = 10, height = 1)
+    expert_button.pack(pady = 10)
+
+def create_questions_window():
+    global question_label
+
+    question_window.deiconify()
+    difficulty_window.withdraw()
+
+    questions_header_label = Label(question_window, text = "Questions", font = ("Times New Roman", 30))
+    questions_header_label.pack(pady = 20)
+
+    question_label = Label(question_window, text = "Placeholder", font = ("Times New Roman", 14))
+    question_label.pack(pady = 30)
+
+    answer_entry = Entry(question_window, font = ("Times New Roman", 14))
+    answer_entry.pack(pady = 10)
+
+    submit_button = Button(question_window, text = "Submit", font = ("Times New Roman", 18), width = 10, height = 1)
+    submit_button.pack(pady = 10)
+
+    quit_button = Button(question_window, text = "Quit", command = exit_button, font = ("Times New Roman", 18), width = 10, height = 1)
+    quit_button.pack(pady = 10)
+
+def exit_button():
+    instructions_window.destroy()
+    difficulty_window.destroy()
+    question_window.destroy()
+
+def name_verification():
+    name = name_entry.get().title()
+    
+    if name.replace (" ", "").replace("-", "").isalpha():
+        create_difficulty_window()
     else:
-        return True
-    return False
+        messagebox.showinfo("Invalid Name", "❌ Please enter a valid name!")
+        name_entry.delete(0, tk.END)
+        name_entry.focus()
 
-def try_again():
-    try_again.num1update = random.choice(num)
-    try_again.num2update = random.choice(num)
-    question = Label(
-        app, text = f"{try_again.num1update}+{try_again.num2update}", font = ("Times New Roman", 16)
-    )
-    question.place(relx = 0.16, rely = 0.14, relwidth = 0.7, relheight = 0.23)
+def basic_questions():
+    create_questions_window()
+    
+    num1 = random.randint(1, 12)
+    num2 = random.randint(1, 12)
+    
+    question_type = random.randint(1, 4)
 
-def resultPlus():
-    try_again
+    if question_type == 1:
+        question_label.config(text = f"What is {num1} + {num2}?")
+        
+    elif question_type == 2:
+        question_label.config(text = f"What is {num1} - {num2}?")
+        
+    elif question_type == 3:
+        question_label.config(text = f"What is {num1} * {num2}?")
+        
+    else:
+        question_label.config(text = f"What is {num1} / {num2}?")
+        
+instructions_window = Tk()
+instructions_window.title("Instructions")
+instructions_window.geometry("500x450")
+instructions_window.resizable(False, False)
 
-    return try_again.num1update + try_again.num2update
+difficulty_window = Tk()
+difficulty_window.title("Difficulty")
+difficulty_window.geometry("500x400")
+difficulty_window.resizable(False, False)
+difficulty_window.withdraw()
 
-app = Tk()
-app.title("Maths Quiz")
-app.geometry("300x400")
-app.resizable(True, True)
+question_window = Tk()
+question_window.title("Questions")
+question_window.geometry("500x400")
+question_window.resizable(False, False)
+question_window.withdraw()
 
-start = Button(app, text = "Begin Adventure", bg = "blue", fg = "white", font = "50", command = try_again)
-start.place(relx = 0.33, rely = 0.2, relwidth = 0.4, relheight = 0.15)
-
-#button_img = PhotoImage(file="Start_Button.png")  # Replace with your image path
-#cool_button = Button(app, image = button_img)
-#cool_button.place(relx = 0.33, rely = 0.2, relwidth = 0.34, relheight = 0.23)
-
-
-solving = Entry(app, font = ("Times New Roman", 25) )
-solving.place(relx = 0.35, rely = 0.4, relwidth = 0.34, relheight = 0.23)
-
-submit = Button(app, text = "Submit", command = lambda: submt(solving))
-submit.place(relx = 0.35, rely = 0.64, relwidth = 0.34, relheight = 0.23)
-
-try_again = Button(app, text = "Try Again", command = try_again)
-try_again.place(relx = 0.43, rely = 0.9)
-
-app.mainloop()
+create_instructions_window()
