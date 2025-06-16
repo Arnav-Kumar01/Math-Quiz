@@ -2,7 +2,7 @@
 Project Name: Maths Quiz
 Author: Arnav Kumar
 Date Created: 11/06/2025
-Last Modified: 12/06/2025
+Last Modified: 16/06/2025
 Description: This is a program to help students learn and practice maths.
 Language Used: Python 3.10
 Files Required: None
@@ -19,22 +19,22 @@ def create_instructions_window():
     global name_entry
     
     header_label = Label(instructions_window, text = "Maths Quiz", font = ("Times New Roman", 30))
-    header_label.pack(pady = 20)
+    header_label.place(relx = 0.5, rely = 0.15, anchor = "center")
 
     instruction_label = Label(instructions_window, text = "Try your best to answer all the questions!", font = ("Times New Roman", 14))
-    instruction_label.pack(pady = 30)
+    instruction_label.place(relx = 0.5, rely = 0.3, anchor = "center")
 
     name_label = Label(instructions_window, text = "What is your name?", font = ("Times New Roman", 14))
-    name_label.pack(pady = 10)
+    name_label.place(relx = 0.5, rely = 0.45, anchor = "center")
     
     name_entry = Entry(instructions_window, justify = "center", font = ("Times New Roman", 14))
-    name_entry.pack(pady = 10)
+    name_entry.place(relx = 0.5, rely = 0.55, anchor = "center")
     
     start_button = Button(instructions_window, text = "Start", command = create_difficulty_window, font = ("Times New Roman", 18), width = 10, height = 1)
-    start_button.pack(pady = 10)
+    start_button.place(relx = 0.5, rely = 0.7, anchor = "center")
 
     quit_button = Button(instructions_window, text = "Quit", command = exit_button, font = ("Times New Roman", 18), width = 10, height = 1)
-    quit_button.pack(pady = 10)
+    quit_button.place(relx = 0.5, rely = 0.85, anchor = "center")
 
 
 def create_difficulty_window():
@@ -42,19 +42,19 @@ def create_difficulty_window():
     instructions_window.withdraw()
     
     difficulty_header_label = Label(difficulty_window, text = "Difficulty", font = ("Times New Roman", 30))
-    difficulty_header_label.pack(pady = 20)
+    difficulty_header_label.place(relx = 0.5, rely = 0.15, anchor = "center")
 
     difficulty_label = Label(difficulty_window, text = "Which difficulty would you like to choose!", font = ("Times New Roman", 14))
-    difficulty_label.pack(pady = 30)
+    difficulty_label.place(relx = 0.5, rely = 0.3, anchor = "center")
 
     basic_button = Button(difficulty_window, text = "Basic", command = basic_questions, font = ("Times New Roman", 18), width = 10, height = 1)
-    basic_button.pack(pady = 10)
+    basic_button.place(relx = 0.5, rely = 0.5, anchor = "center")
 
     advanced_button = Button(difficulty_window, text = "Advanced", font = ("Times New Roman", 18), width = 10, height = 1)
-    advanced_button.pack(pady = 10)
+    advanced_button.place(relx = 0.5, rely = 0.65, anchor = "center")
 
     expert_button = Button(difficulty_window, text = "Expert", font = ("Times New Roman", 18), width = 10, height = 1)
-    expert_button.pack(pady = 10)
+    expert_button.place(relx = 0.5, rely = 0.8, anchor = "center")
 
 def create_questions_window():
     global question_label
@@ -65,13 +65,13 @@ def create_questions_window():
     questions_header_label = Label(question_window, text = "Questions", font = ("Times New Roman", 30))
     questions_header_label.pack(pady = 20)
 
-    question_label = Label(question_window, text = "Placeholder", font = ("Times New Roman", 14))
+    question_label = Label(question_window, text = "", font = ("Times New Roman", 14))
     question_label.pack(pady = 30)
 
     answer_entry = Entry(question_window, font = ("Times New Roman", 14))
     answer_entry.pack(pady = 10)
 
-    submit_button = Button(question_window, text = "Submit", font = ("Times New Roman", 18), width = 10, height = 1)
+    submit_button = Button(question_window, text = "Submit", command = lambda: press_submit_button(answer_entry), font = ("Times New Roman", 18), width = 10, height = 1)
     submit_button.pack(pady = 10)
 
     quit_button = Button(question_window, text = "Quit", command = exit_button, font = ("Times New Roman", 18), width = 10, height = 1)
@@ -85,12 +85,22 @@ def exit_button():
 def name_verification():
     name = name_entry.get().title()
     
-    if name.replace (" ", "").replace("-", "").isalpha():
+    if name.replace(" ", "").replace("-", "").isalpha():
         create_difficulty_window()
     else:
         messagebox.showinfo("Invalid Name", "❌ Please enter a valid name!")
         name_entry.delete(0, tk.END)
         name_entry.focus()
+
+def press_submit_button(user_input):
+    answer_entry = user_input.get()
+    
+    validity = validator(answer_entry)
+
+    if validity == True:
+        print("valid")
+    else:
+        print("invalid")
 
 def basic_questions():
     create_questions_window()
@@ -111,10 +121,35 @@ def basic_questions():
         
     else:
         question_label.config(text = f"What is {num1} / {num2}?")
-        
+
+
+def validator(user_input):
+    #Blanks
+    if user_input == "":
+        messagebox.showinfo("Black", "❌ Please don't leave the entry blank!")
+    
+    #Alphabet, Whitespace, and Symbols
+    elif user_input.isdigit() == False:
+        if user_input.isalnum() == True:
+            messagebox.showinfo("Alphabet", "❌ Please don't enter any letters!")
+            
+        elif " " in user_input:
+            messagebox.showinfo("Whitespace", "❌ Please don't enter any spaces!")
+            
+        else:
+            messagebox.showinfo("Symbols", "❌ Please don't enter any symbols!")
+            
+    #Boundaries
+    elif len(user_input) > 6:
+        messagebox.showinfo("Character Limit", "❌ Character limit has been breached!")
+
+    else:
+        return True
+    return False
+
 instructions_window = Tk()
 instructions_window.title("Instructions")
-instructions_window.geometry("500x450")
+instructions_window.geometry("500x400")
 instructions_window.resizable(False, False)
 
 difficulty_window = Tk()
