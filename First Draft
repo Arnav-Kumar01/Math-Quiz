@@ -2,166 +2,409 @@
 Project Name: Maths Quiz
 Author: Arnav Kumar
 Date Created: 11/06/2025
-Last Modified: 16/06/2025
+Last Modified: 17/07/2025
 Description: This is a program to help students learn and practice maths.
 Language Used: Python 3.10
 Files Required: None
 Known Issues: None
 """
 
+# Import libraries.
 from tkinter import *
-import tkinter as tk
-import random
-import re
 from tkinter import messagebox
+import random
+import math
 
-def create_instructions_window():
-    global name_entry
-    
-    header_label = Label(instructions_window, text = "Maths Quiz", font = ("Times New Roman", 30))
-    header_label.place(relx = 0.5, rely = 0.15, anchor = "center")
+# This is a def main function which contains all the code.
+def main():
 
-    instruction_label = Label(instructions_window, text = "Try your best to answer all the questions!", font = ("Times New Roman", 14))
-    instruction_label.place(relx = 0.5, rely = 0.3, anchor = "center")
+    # Create constants so I can easily change the fonts.
+    FONT_HEADER = ("Times New Roman", 30)
+    FONT_LABEL = ("Times New Roman", 14)
+    FONT_BUTTON = ("Times New Roman", 18)
 
-    name_label = Label(instructions_window, text = "What is your name?", font = ("Times New Roman", 14))
-    name_label.place(relx = 0.5, rely = 0.45, anchor = "center")
-    
-    name_entry = Entry(instructions_window, justify = "center", font = ("Times New Roman", 14))
-    name_entry.place(relx = 0.5, rely = 0.55, anchor = "center")
-    
-    start_button = Button(instructions_window, text = "Start", command = create_difficulty_window, font = ("Times New Roman", 18), width = 10, height = 1)
-    start_button.place(relx = 0.5, rely = 0.7, anchor = "center")
-
-    quit_button = Button(instructions_window, text = "Quit", command = exit_button, font = ("Times New Roman", 18), width = 10, height = 1)
-    quit_button.place(relx = 0.5, rely = 0.85, anchor = "center")
+    # Create class scope variables.
+    correct_answer = ""
+    current_difficulty = "basic"
 
 
-def create_difficulty_window():
-    difficulty_window.deiconify()
-    instructions_window.withdraw()
-    
-    difficulty_header_label = Label(difficulty_window, text = "Difficulty", font = ("Times New Roman", 30))
-    difficulty_header_label.place(relx = 0.5, rely = 0.15, anchor = "center")
+    # This is a function that creates the instructions window.
+    def create_instructions_window():
+        # Define global variables.
+        global name_entry
 
-    difficulty_label = Label(difficulty_window, text = "Which difficulty would you like to choose!", font = ("Times New Roman", 14))
-    difficulty_label.place(relx = 0.5, rely = 0.3, anchor = "center")
+        # Create the labels.
+        Label(instructions_window, text = "Maths Quiz", font = FONT_HEADER).place(relx = 0.5, rely = 0.15, anchor = "center")
+        Label(instructions_window, text = "Try your best to answer all the questions!", font = FONT_LABEL).place(relx = 0.5, rely = 0.3, anchor = "center")
+        Label(instructions_window, text = "What is your name?", font = FONT_LABEL).place(relx = 0.5, rely = 0.45, anchor = "center")
 
-    basic_button = Button(difficulty_window, text = "Basic", command = basic_questions, font = ("Times New Roman", 18), width = 10, height = 1)
-    basic_button.place(relx = 0.5, rely = 0.5, anchor = "center")
+        # Create the name entry.
+        name_entry = Entry(instructions_window, justify = "center", font = FONT_LABEL)
+        name_entry.place(relx = 0.5, rely = 0.55, anchor = "center")
 
-    advanced_button = Button(difficulty_window, text = "Advanced", font = ("Times New Roman", 18), width = 10, height = 1)
-    advanced_button.place(relx = 0.5, rely = 0.65, anchor = "center")
+        # Create the buttons.
+        Button(instructions_window, text = "Start", command = name_verification, font = FONT_BUTTON, width = 10).place(relx = 0.5, rely = 0.7, anchor = "center")
+        Button(instructions_window, text = "Quit", command = quit_button, font = FONT_BUTTON, width = 10).place(relx = 0.5, rely = 0.85, anchor = "center")
 
-    expert_button = Button(difficulty_window, text = "Expert", font = ("Times New Roman", 18), width = 10, height = 1)
-    expert_button.place(relx = 0.5, rely = 0.8, anchor = "center")
 
-def create_questions_window():
-    global question_label
+    # This is a function that creates the difficulty window.
+    def create_difficulty_window():
+        # This hides the instructions window and unhides the difficulty window.
+        difficulty_window.deiconify()
+        instructions_window.withdraw()
 
-    question_window.deiconify()
+        # Create the labels.
+        Label(difficulty_window, text = "Difficulty", font = FONT_HEADER).place(relx = 0.5, rely = 0.15, anchor = "center")
+        Label(difficulty_window, text = "Which difficulty would you like to choose!", font = FONT_LABEL).place(relx = 0.5, rely = 0.3, anchor = "center")
+
+        # Create the buttons.
+        Button(difficulty_window, text = "Basic", command = basic_questions, font = FONT_BUTTON, width = 10).place(relx = 0.5, rely = 0.5, anchor = "center")
+        Button(difficulty_window, text = "Advanced", command = advanced_questions, font = FONT_BUTTON, width = 10).place(relx = 0.5, rely = 0.65, anchor = "center")
+        Button(difficulty_window, text = "Expert", command = expert_questions, font = FONT_BUTTON, width = 10).place(relx = 0.5, rely = 0.8, anchor = "center")
+
+
+    # This is a function that creates the questions window.
+    def create_questions_window():
+        # Define global variables.
+        global question_label, answer_entry
+
+        # This hides the difficulty window and unhides the questions window.
+        question_window.deiconify()
+        difficulty_window.withdraw()
+
+        # Create the header label.
+        Label(question_window, text = "Questions", font = FONT_HEADER).place(relx = 0.5, rely = 0.15, anchor = "center")
+
+        # Create the question label which is constantly changing.
+        question_label = Label(question_window, text = "", font = FONT_LABEL)
+        question_label.place(relx = 0.5, rely = 0.35, anchor = "center")
+
+        # Create the answer entry.
+        answer_entry = Entry(question_window, justify = "center", font = FONT_LABEL)
+        answer_entry.place(relx = 0.5, rely = 0.5, anchor = "center")
+
+        # Create the buttons.
+        Button(question_window, text = "Submit", command = submit_answer, font = FONT_BUTTON, width = 10).place(relx = 0.5, rely = 0.65, anchor = "center")
+        Button(question_window, text = "Quit", command = quit_button, font = FONT_BUTTON, width = 10).place(relx = 0.5, rely = 0.8, anchor = "center")
+
+
+    # This is a function that asks the user if they're sure they want to quit.
+    def quit_button():
+        # This asks the user if they're sure they want to quit.
+        confirm = messagebox.askyesno("Confirm Quit", "Are you sure you want to quit?")
+
+        # If they say yes, the program closes.
+        if confirm:
+            instructions_window.destroy()
+            difficulty_window.destroy()
+            question_window.destroy()
+
+
+    # This is a function to validate the name entry.
+    def name_verification():
+        # This capitalises the name entry.
+        name = name_entry.get().title()
+
+        # Checks if the name is an alphabet.
+        if name.replace(" ", "").replace("-", "").replace("'", "").isalpha():
+            # If the name is valid, create the next window.
+            create_difficulty_window()
+
+        # If the name is invalid, an error message appears.
+        else:
+            # Create the error message.
+            messagebox.showinfo("Invalid Name", "❌ Please enter a valid name!")
+
+            # Deletes the entry box and resets the focus.
+            name_entry.delete(0, END)
+            name_entry.focus()
+
+
+    # This is a function that validates the answer entry.
+    def validator(user_input):
+        # Checks if the entry has any digits.
+        if user_input.replace("-", "").isdigit() == False:
+            # Checks if the entry has any letters of the alphabet and show an error message.
+            if user_input.replace("-", "").isalnum() == True:
+                messagebox.showinfo("Alphabet", "❌ Please don't enter any letters!")
+
+            # Checks if the entry has any whitespace and show an error message.
+            elif " " in user_input:
+                messagebox.showinfo("Whitespace", "❌ Please don't enter any spaces!")
+
+            # Checks if the entry has any symbols and show an error message.
+            else:
+                messagebox.showinfo("Symbols", "❌ Please don't enter any symbols!")
+
+        # Checks if the entry has too many characters and show an error message.
+        elif len(user_input) > 6:
+            messagebox.showinfo("Character Limit", "❌ Character limit has been breached!")
+
+        # If the entry is valid, return true.
+        else:
+            return True
+
+        # Deletes the entry box and resets the focus.
+        answer_entry.delete(0, END)
+        answer_entry.focus()
+
+        # If the entry is invalid, return false.
+        return False
+
+
+    # This is a function that generates randomised basic questions.
+    def generate_basic_question():
+        # Define non local variables.
+        nonlocal correct_answer
+
+        # Creates random numbers.
+        num1 = random.randint(1, 12)
+        num2 = random.randint(1, 12)
+        question_type = random.randint(1, 4)
+
+        # Creates an addition question.
+        if question_type == 1:
+            correct_answer = num1 + num2
+            return f"What is {num1} + {num2}?"
+
+        # Creates a subtraction question.
+        elif question_type == 2:
+            correct_answer = num1 - num2
+            return f"What is {num1} - {num2}?"
+
+        # Creates a multiplication question.
+        elif question_type == 3:
+            correct_answer = num1 * num2
+            return f"What is {num1} × {num2}?"
+
+        # Creates a division question.
+        else:
+            num1 *= num2
+            correct_answer = num1 // num2
+            return f"What is {num1} ÷ {num2}?"
+
+
+    # This is a function that creates the questions window.
+    def basic_questions():
+        # Define non local variables.
+        nonlocal current_difficulty
+
+        # Set the current difficulty to basic.
+        current_difficulty = "basic"
+
+        # Calls the create questions window function.
+        create_questions_window()
+
+        # Changes the label to the question generated in another function.
+        question_label.config(text = generate_basic_question())
+
+        # Deletes the answer entry and resets the focus.
+        answer_entry.delete(0, END)
+        answer_entry.focus()
+
+    # This is a function that generates randomised advanced questions.
+    def generate_advanced_question():
+        # Define non local variables.
+        nonlocal correct_answer
+
+        # Determines which type of question will be asked.
+        question_type = random.randint(1, 5)
+
+        # Creates an addition question.
+        if question_type == 1:
+            num1 = random.randint(100, 500)
+            num2 = random.randint(100, 500)
+            correct_answer = num1 + num2
+            return f"What is {num1} + {num2}?"
+
+        # Creates a subtraction question.
+        elif question_type == 2:
+            num1 = random.randint(100, 500)
+            num2 = random.randint(1, 100)
+            correct_answer = num1 - num2
+            return f"What is {num1} - {num2}?"
+
+        # Creates a multiplication question.
+        elif question_type == 3:
+            num1 = random.randint(12, 30)
+            num2 = random.randint(12, 30)
+            correct_answer = num1 * num2
+            return f"What is {num1} × {num2}?"
+
+        # Creates a division question.
+        elif question_type == 4:
+            num2 = random.randint(12, 20)
+            correct_answer = random.randint(12, 20)
+            num1 = num2 * correct_answer
+            return f"What is {num1} ÷ {num2}?"
+
+        # Creates a power question.
+        else:
+            base = random.randint(2, 10)
+            exponent = random.randint(2, 4)
+            correct_answer = base ** exponent
+            return f"What is {base} ^ {exponent}?"
+
+
+    # This is a function that creates the questions window.
+    def advanced_questions():
+        # Define non local variables.
+        nonlocal current_difficulty
+
+        # Set the current difficulty to advanced.
+        current_difficulty = "advanced"
+
+        # Calls the create questions window function.
+        create_questions_window()
+
+        # Changes the label to the question generated in another function.
+        question_label.config(text = generate_advanced_question())
+
+        # Deletes the answer entry and resets the focus.
+        answer_entry.delete(0, END)
+        answer_entry.focus()
+
+
+    # This is a function that generates randomised expert questions.
+    def generate_expert_question():
+        # Define non local variables.
+        nonlocal correct_answer
+
+        # Determines which type of question will be asked.
+        question_type = random.randint(1, 2)
+
+        # Derivative questions.
+        if question_type == 1:
+            coefficient = random.randint(3, 10)
+            exponent = random.randint(3, 5)
+            new_coefficient = coefficient * exponent
+            new_exponent = exponent - 1
+
+            # Removes the 1 from the beginning of the answer.
+            if new_exponent == 1:
+                if new_coefficient == 1:
+                    correct_answer = "x"
+                    
+                else:
+                    correct_answer = f"{new_coefficient}x"
+
+            # Removes the ^1 from the answer.
+            elif new_exponent == 0:
+                correct_answer = f"{new_coefficient}"
+
+            else:
+                if new_coefficient == 1:
+                    correct_answer = f"x^{new_exponent}"
+                else:
+                    correct_answer = f"{new_coefficient}x^{new_exponent}"
+
+            # Returns the question being asked.
+            return f"What is the derivative of {coefficient}x^{exponent}?"
+
+        # Integration questions.
+        else:
+            coefficient = random.randint(3, 10)
+            exponent = random.randint(2, 5)
+            new_exponent = exponent + 1
+
+            gcd = math.gcd(coefficient, new_exponent)
+            simplified_coeffecient = coefficient // gcd
+            simplified_denominator = new_exponent // gcd
+
+            # Simplifies the answer.
+            if simplified_denominator == 1:
+                if simplified_coeffecient == 1:
+                    correct_answer = f"x^{new_exponent}"
+                else:
+                    correct_answer = f"{simplified_coeffecient}x^{new_exponent}"
+            else:
+                if simplified_coeffecient == 1:
+                    correct_answer = f"x^{new_exponent}/{simplified_denominator}"
+                else:
+                    correct_answer = f"{simplified_coeffecient}x^{new_exponent}/{simplified_denominator}"
+
+            # Returns the question being asked.
+            return f"Integrate {coefficient}x^{exponent}"
+
+    # This is a function that creates the questions window.
+    def expert_questions():
+        # Define non local variables.
+        nonlocal current_difficulty
+
+        # Set the current difficulty to expert.
+        current_difficulty = "expert"
+
+        # Calls the create questions window function.
+        create_questions_window()
+
+        # Changes the label to the question generated in another function.
+        question_label.config(text = generate_expert_question())
+
+        # Deletes the answer entry and resets the focus.
+        answer_entry.delete(0, END)
+        answer_entry.focus()
+
+    # This is a function that checks whether the user got the answer correct.
+    def submit_answer():
+        # Gets the answer entry.
+        user_input = answer_entry.get()
+
+        # Checks if the answer is valid, expert difficulty answers are bypassed.
+        if current_difficulty == "expert" or validator(user_input):
+            if current_difficulty == "expert":
+                user_input_clean = user_input.replace(" ", "").lower()
+                correct_clean = str(correct_answer).replace(" ", "").lower()
+                # Checks if the answer is correct.
+                if user_input_clean == correct_clean:
+                    messagebox.showinfo("Correct!", "✅ Correct!")
+                    
+                else:
+                    messagebox.showinfo("Incorrect", f"❌ The correct answer was {correct_answer}.")
+            else:
+                # Checks if the answer is correct.
+                if int(user_input) == correct_answer:
+                    messagebox.showinfo("Correct!", "✅ Correct!")
+                    
+                else:
+                    messagebox.showinfo("Incorrect", f"❌ The correct answer was {correct_answer}.")
+
+            # Generates another question.
+            if current_difficulty == "basic":
+                question_label.config(text = generate_basic_question())
+                
+            elif current_difficulty == "advanced":
+                question_label.config(text = generate_advanced_question())
+                
+            else:
+                question_label.config(text = generate_expert_question())
+
+            # Deletes the answer entry and resets the focus.
+            answer_entry.delete(0, END)
+            answer_entry.focus()
+
+
+    # Setup for the instructions window.
+    instructions_window = Tk()
+    instructions_window.title("Instructions")
+    instructions_window.geometry("500x400")
+    instructions_window.resizable(True, True)
+
+    # Setup for the difficulty window.
+    difficulty_window = Tk()
+    difficulty_window.title("Difficulty")
+    difficulty_window.geometry("500x400")
+    difficulty_window.resizable(True, True)
     difficulty_window.withdraw()
 
-    questions_header_label = Label(question_window, text = "Questions", font = ("Times New Roman", 30))
-    questions_header_label.pack(pady = 20)
+    # Setup for the questions window.
+    question_window = Tk()
+    question_window.title("Questions")
+    question_window.geometry("500x400")
+    question_window.resizable(True, True)
+    question_window.withdraw()
 
-    question_label = Label(question_window, text = "", font = ("Times New Roman", 14))
-    question_label.pack(pady = 30)
+    create_instructions_window()
+    instructions_window.mainloop()
 
-    answer_entry = Entry(question_window, font = ("Times New Roman", 14))
-    answer_entry.pack(pady = 10)
-
-    submit_button = Button(question_window, text = "Submit", command = lambda: press_submit_button(answer_entry), font = ("Times New Roman", 18), width = 10, height = 1)
-    submit_button.pack(pady = 10)
-
-    quit_button = Button(question_window, text = "Quit", command = exit_button, font = ("Times New Roman", 18), width = 10, height = 1)
-    quit_button.pack(pady = 10)
-
-def exit_button():
-    instructions_window.destroy()
-    difficulty_window.destroy()
-    question_window.destroy()
-
-def name_verification():
-    name = name_entry.get().title()
-    
-    if name.replace(" ", "").replace("-", "").isalpha():
-        create_difficulty_window()
-    else:
-        messagebox.showinfo("Invalid Name", "❌ Please enter a valid name!")
-        name_entry.delete(0, tk.END)
-        name_entry.focus()
-
-def press_submit_button(user_input):
-    answer_entry = user_input.get()
-    
-    validity = validator(answer_entry)
-
-    if validity == True:
-        print("valid")
-    else:
-        print("invalid")
-
-def basic_questions():
-    create_questions_window()
-    
-    num1 = random.randint(1, 12)
-    num2 = random.randint(1, 12)
-    
-    question_type = random.randint(1, 4)
-
-    if question_type == 1:
-        question_label.config(text = f"What is {num1} + {num2}?")
-        
-    elif question_type == 2:
-        question_label.config(text = f"What is {num1} - {num2}?")
-        
-    elif question_type == 3:
-        question_label.config(text = f"What is {num1} * {num2}?")
-        
-    else:
-        question_label.config(text = f"What is {num1} / {num2}?")
-
-
-def validator(user_input):
-    #Blanks
-    if user_input == "":
-        messagebox.showinfo("Black", "❌ Please don't leave the entry blank!")
-    
-    #Alphabet, Whitespace, and Symbols
-    elif user_input.isdigit() == False:
-        if user_input.isalnum() == True:
-            messagebox.showinfo("Alphabet", "❌ Please don't enter any letters!")
-            
-        elif " " in user_input:
-            messagebox.showinfo("Whitespace", "❌ Please don't enter any spaces!")
-            
-        else:
-            messagebox.showinfo("Symbols", "❌ Please don't enter any symbols!")
-            
-    #Boundaries
-    elif len(user_input) > 6:
-        messagebox.showinfo("Character Limit", "❌ Character limit has been breached!")
-
-    else:
-        return True
-    return False
-
-instructions_window = Tk()
-instructions_window.title("Instructions")
-instructions_window.geometry("500x400")
-instructions_window.resizable(False, False)
-
-difficulty_window = Tk()
-difficulty_window.title("Difficulty")
-difficulty_window.geometry("500x400")
-difficulty_window.resizable(False, False)
-difficulty_window.withdraw()
-
-question_window = Tk()
-question_window.title("Questions")
-question_window.geometry("500x400")
-question_window.resizable(False, False)
-question_window.withdraw()
-
-create_instructions_window()
+# Runs the program.
+main()
