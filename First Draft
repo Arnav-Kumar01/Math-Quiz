@@ -19,6 +19,49 @@ import csv
 import os
 
 
+# This is a class that runs the leaderboard functions of the program.
+class Leaderboard:
+
+    # This is a function that sets up the class.
+    def __init__(self, filename = "leaderboard.csv"):
+
+        self.filename = filename
+
+
+    # This is a function that saves the user's score.
+    def save_score(self, name, score):
+
+        file_exists = os.path.isfile(self.filename)
+
+        # Opens the file.
+        with open(self.filename, mode = "a", newline = "") as file:
+            writer = csv.writer(file)
+
+            # Write headers if the file doesnt exist.
+            if not file_exists:
+                writer.writerow(["Name", "Score"])
+
+            # Write the name and score onto the file.
+            writer.writerow([name, score])
+
+
+    # This is a function that gets the top scores and sorts it.
+    def get_top_scores(self, limit = 10):
+
+        # Opens the file.
+        with open(self.filename, "r") as file:
+            reader = list(csv.reader(file))[1:]
+
+            # Sorts the scores from highest to lowest.
+            return sorted(
+                [(row[0], int(row[1])) for row in reader if len(row) == 2 and row[1].isdigit()],
+                key = lambda x: x[1],
+                reverse = True
+            )[:limit]
+
+
+
+# This is a class that runs the quiz side of the program.
 class MathsQuiz:
 
     # This is a function that sets up the windows.
@@ -27,6 +70,7 @@ class MathsQuiz:
         # Create constants so I can easily change the fonts.
         self.FONT_HEADER = ("Times New Roman", 30, "bold")
         self.FONT_LABEL = ("Times New Roman", 14)
+        self.LEADERBOARD_LABEL = ("Times New Roman", 14, "bold")
         self.FONT_BUTTON = ("Times New Roman", 18)
 
         self.difficulty_window = None
@@ -59,13 +103,15 @@ class MathsQuiz:
         self.question_window.geometry("500x400")
         self.question_window.resizable(False, False)
         self.question_window.withdraw()
-
+        
         # Setup for the leaderboard window.
         self.leaderboard_window = Toplevel(self.instructions_window)
-        self.leaderboard_window.title("Questions")
+        self.leaderboard_window.title("Leaderboard")
         self.leaderboard_window.geometry("500x400")
         self.leaderboard_window.resizable(False, False)
         self.leaderboard_window.withdraw()
+
+        self.leaderboard = Leaderboard()
 
         self.create_instructions_window()
         self.instructions_window.mainloop()
@@ -189,7 +235,7 @@ class MathsQuiz:
     # This is a function that creates the leaderboard window.
     def create_leaderboard_window(self):
 
-        # This hides the instructions window and unhides the difficulty window.
+        # This hides the question window and unhides the leaderboard window.
         self.leaderboard_window.deiconify()
         if self.questions_window is not None:
             self.questions_window.withdraw()
@@ -208,27 +254,43 @@ class MathsQuiz:
 
         # Create the labels.
         self.leaderboard_canvas.create_text(250, 60, text = "Leaderboard", font = self.FONT_HEADER)
-        self.leaderboard_canvas.create_text(150, 120, text = "Name", font = self.FONT_LABEL)
-        self.leaderboard_canvas.create_text(350, 120, text = "Score", font = self.FONT_LABEL)
+        self.leaderboard_canvas.create_text(175, 100, text = "Rank", font = self.LEADERBOARD_LABEL, anchor = "e")
+        self.leaderboard_canvas.create_text(210, 100, text = "Name", font = self.LEADERBOARD_LABEL,  anchor = "w")
+        self.leaderboard_canvas.create_text(350, 100, text = "Score", font = self.LEADERBOARD_LABEL)
+        
+        top_10 = self.leaderboard.get_top_scores()
+
+        # For loop to place all the values on the leaderboard window
+        for i, (name, score) in enumerate(top_10, start = 1):
+            y_position = 120 + (i - 1) * 20
+            self.leaderboard_canvas.create_text(175, y_position, text = f"{i}.", font =self.FONT_LABEL, anchor = "e")
+            self.leaderboard_canvas.create_text(210, y_position, text = name, font = self.FONT_LABEL, anchor = "w")
+            self.leaderboard_canvas.create_text(350, y_position, text = str(score), font = self.FONT_LABEL, anchor = "center")
 
         # Create the buttons.
-        self.restart_button = Button(self.leaderboard_window, text = "Restart", command = self.restart_quiz, width = 10).place(relx = 0.5, rely = 0.8, anchor = "center")
-        self.quit_button = Button(self.leaderboard_window, text = "Quit", command = self.quit_button, width = 10).place(relx = 0.5, rely = 0.9, anchor = "center")
+        restart_button = Button(self.leaderboard_window, text = "Restart", command = self.restart_quiz, font = self.FONT_BUTTON, width = 10)
+        self.leaderboard_canvas.create_window(175, 350, window = restart_button)
+
+        quit_button = Button(self.leaderboard_window, text = "Quit", command = self.quit_button, font = self.FONT_BUTTON, width = 10)
+        self.leaderboard_canvas.create_window(325, 350, window = quit_button)
         
-
-    # This is a function that updates the timer.
-    def update_timer(self):
-
-        # If there is still time left, reduce the time by one second and display it on the label.
-        if self.time_left > 0:
-            self.time_left -= 1
-            self.questions_canvas.itemconfig(self.timer_text, text = f"Time Left: {self.time_left}s")
-            self.timer_id = self.question_window.after(1000, self.update_timer)
-
-        # If there is no time left, end the quiz.
-        else:
-            self.end_quiz()
             
+    # This is a function that sets up the difficulty and generates questions based on what the user has chosen.
+    def start_quiz(self, difficulty, question_generator):
+
+        # Set the difficulty to the chosen difficulty by the user.
+        self.current_difficulty = difficulty
+
+        # Creates the questions window.
+        self.create_questions_window()
+
+        # Writes the question.
+        self.questions_canvas.itemconfig(self.question_text, text = question_generator())
+
+        # Deletes the entry box and resets the focus.
+        self.answer_entry.delete(0, END)
+        self.answer_entry.focus()
+
 
     # This is a function that appears when the quiz is over.
     def end_quiz(self):
@@ -240,6 +302,9 @@ class MathsQuiz:
         # Show the user their score.
         messagebox.showinfo("Score", f"Your score is {self.score} out of {self.questions_answered} questions answered.")
 
+        # Save the score to a CSV file.
+        self.leaderboard.save_score(self.name_entry.get().title(), self.score)
+        
         # Call the leaderboard function.
         self.create_leaderboard_window()
 
@@ -283,6 +348,7 @@ class MathsQuiz:
         if name.replace(" ", "").replace("-", "").replace("'", "").isalpha():
             # If the name is valid, create the next window.
             self.create_difficulty_window()
+
         else:
             # Create the error message.
             messagebox.showinfo("Invalid Name", "❌ Please enter a valid name!")
@@ -293,8 +359,13 @@ class MathsQuiz:
     # This is a function that validates the answer entry.
     def validator(self, user_input):
 
+        # Check if the input is blank (empty or only spaces)
+        if user_input.strip() == "":
+            messagebox.showinfo("Blank", "❌ Have a guess!")
+            return False
+        
         # Checks if the entry has any digits.
-        if user_input.replace("-", "").isdigit() == False:
+        elif user_input.replace("-", "").isdigit() == False:
             # Checks if the entry has any letters of the alphabet and show an error message.
             if user_input.replace("-", "").isalnum() == True:
                 messagebox.showinfo("Alphabet", "❌ Please don't enter any letters!")
@@ -323,6 +394,64 @@ class MathsQuiz:
         return False
 
 
+    # This is a function that checks whether the user got the answer correct.
+    def submit_answer(self):
+        # Gets the answer entry.
+        user_input = self.answer_entry.get()
+
+        # Checks if the answer is valid, expert difficulty answers are bypassed.
+        if self.current_difficulty == "expert" or self.validator(user_input):
+            if self.current_difficulty == "expert":
+                user_input_clean = user_input.replace(" ", "").lower()
+                correct_clean = str(self.correct_answer).replace(" ", "").lower()
+                # Checks if the answer is correct.
+                if user_input_clean == correct_clean:
+                    messagebox.showinfo("Correct!", "✅ Correct!")
+                    self.score += 1
+
+                else:
+                    messagebox.showinfo("Incorrect", f"❌ The correct answer was {self.correct_answer}.")
+            else:
+                # Checks if the answer is correct.
+                if int(user_input) == self.correct_answer:
+                    messagebox.showinfo("Correct!", "✅ Correct!")
+                    self.score += 1
+
+                else:
+                    messagebox.showinfo("Incorrect", f"❌ The correct answer was {self.correct_answer}.")
+
+            # Generates another question.
+            if self.current_difficulty == "basic":
+                self.questions_canvas.itemconfig(self.question_text, text = self.generate_basic_question())
+
+            elif self.current_difficulty == "advanced":
+                self.questions_canvas.itemconfig(self.question_text, text = self.generate_advanced_question())
+
+            else:
+                self.questions_canvas.itemconfig(self.question_text, text = self.generate_expert_question())
+
+            # Increases the questions answered variable by 1.
+            self.questions_answered += 1
+
+            # Deletes the answer entry and resets the focus.
+            self.answer_entry.delete(0, END)
+            self.answer_entry.focus()
+    
+
+    # This is a function that updates the timer.
+    def update_timer(self):
+
+        # If there is still time left, reduce the time by one second and display it on the label.
+        if self.time_left > 0:
+            self.time_left -= 1
+            self.questions_canvas.itemconfig(self.timer_text, text = f"Time Left: {self.time_left}s")
+            self.timer_id = self.question_window.after(1000, self.update_timer)
+
+        # If there is no time left, end the quiz.
+        else:
+            self.end_quiz()
+
+    
     # This is a function that generates randomised basic questions.
     def generate_basic_question(self):
 
@@ -353,21 +482,10 @@ class MathsQuiz:
             return f"What is {num1} ÷ {num2}?"
 
 
-    # This is a function that creates the questions window.
+    # This is a function that creates the questions window for basic questions.
     def basic_questions(self):
+        self.start_quiz("basic", self.generate_basic_question)
 
-        # Set the current difficulty to basic.
-        self.current_difficulty = "basic"
-
-        # Calls the create questions window function.
-        self.create_questions_window()
-
-        # Changes the label to the question generated in another function.
-        self.questions_canvas.itemconfig(self.question_text, text = self.generate_basic_question())
-
-        # Deletes the answer entry and resets the focus.
-        self.answer_entry.delete(0, END)
-        self.answer_entry.focus()
 
     # This is a function that generates randomised advanced questions.
     def generate_advanced_question(self):
@@ -411,23 +529,11 @@ class MathsQuiz:
             return f"What is {base} ^ {exponent}?"
 
 
-    # This is a function that creates the questions window.
+    # This is a function that creates the questions window for advanced questions.
     def advanced_questions(self):
+        self.start_quiz("advanced", self.generate_advanced_question)
 
-        # Set the current difficulty to advanced.
-        self.current_difficulty = "advanced"
-
-        # Calls the create questions window function.
-        self.create_questions_window()
-
-        # Changes the label to the question generated in another function.
-        self.questions_canvas.itemconfig(self.question_text, text = self.generate_advanced_question())
-
-        # Deletes the answer entry and resets the focus.
-        self.answer_entry.delete(0, END)
-        self.answer_entry.focus()
-
-
+        
     # This is a function that generates randomised expert questions.
     def generate_expert_question(self):
 
@@ -487,67 +593,12 @@ class MathsQuiz:
             return f"Integrate {coefficient}x^{exponent}"
 
 
-    # This is a function that creates the questions window.
+    # This is a function that creates the questions window for expert questions.
     def expert_questions(self):
+        self.start_quiz("expert", self.generate_expert_question)
+    
 
-        # Set the current difficulty to expert.
-        self.current_difficulty = "expert"
-
-        # Calls the create questions window function.
-        self.create_questions_window()
-
-        # Changes the label to the question generated in another function.
-        self.questions_canvas.itemconfig(self.question_text, text = self.generate_expert_question())
-
-        # Deletes the answer entry and resets the focus.
-        self.answer_entry.delete(0, END)
-        self.answer_entry.focus()
-
-
-    # This is a function that checks whether the user got the answer correct.
-    def submit_answer(self):
-        # Gets the answer entry.
-        user_input = self.answer_entry.get()
-
-        # Checks if the answer is valid, expert difficulty answers are bypassed.
-        if self.current_difficulty == "expert" or self.validator(user_input):
-            if self.current_difficulty == "expert":
-                user_input_clean = user_input.replace(" ", "").lower()
-                correct_clean = str(self.correct_answer).replace(" ", "").lower()
-                # Checks if the answer is correct.
-                if user_input_clean == correct_clean:
-                    messagebox.showinfo("Correct!", "✅ Correct!")
-                    self.score += 1
-
-                else:
-                    messagebox.showinfo("Incorrect", f"❌ The correct answer was {self.correct_answer}.")
-            else:
-                # Checks if the answer is correct.
-                if int(user_input) == self.correct_answer:
-                    messagebox.showinfo("Correct!", "✅ Correct!")
-                    self.score += 1
-
-                else:
-                    messagebox.showinfo("Incorrect", f"❌ The correct answer was {self.correct_answer}.")
-
-            # Generates another question.
-            if self.current_difficulty == "basic":
-                self.questions_canvas.itemconfig(self.question_text, text = self.generate_basic_question())
-
-            elif self.current_difficulty == "advanced":
-                self.questions_canvas.itemconfig(self.question_text, text = self.generate_advanced_question())
-
-            else:
-                self.questions_canvas.itemconfig(self.question_text, text = self.generate_expert_question())
-
-            # Increases the questions answered variable by 1.
-            self.questions_answered += 1
-
-            # Deletes the answer entry and resets the focus.
-            self.answer_entry.delete(0, END)
-            self.answer_entry.focus()
-
-
+# Runs the class.
 if __name__ == "__main__":
     app = MathsQuiz()
     app.initialise()
