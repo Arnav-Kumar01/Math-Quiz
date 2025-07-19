@@ -2,7 +2,7 @@
 Project Name: Maths Quiz
 Author: Arnav Kumar
 Date Created: 11/06/2025
-Last Modified: 17/07/2025
+Last Modified: 19/07/2025
 Description: This is a program to help students learn and practice maths.
 Language Used: Python 3.10
 Files Required: None
@@ -12,116 +12,287 @@ Known Issues: None
 # Import libraries.
 from tkinter import *
 from tkinter import messagebox
+from PIL import Image, ImageTk
 import random
 import math
+import csv
+import os
 
-# This is a def main function which contains all the code.
-def main():
 
-    # Create constants so I can easily change the fonts.
-    FONT_HEADER = ("Times New Roman", 30)
-    FONT_LABEL = ("Times New Roman", 14)
-    FONT_BUTTON = ("Times New Roman", 18)
+class MathsQuiz:
 
-    # Create class scope variables.
-    correct_answer = ""
-    current_difficulty = "basic"
+    # This is a function that sets up the windows.
+    def initialise(self):
+
+        # Create constants so I can easily change the fonts.
+        self.FONT_HEADER = ("Times New Roman", 30, "bold")
+        self.FONT_LABEL = ("Times New Roman", 14)
+        self.FONT_BUTTON = ("Times New Roman", 18)
+
+        self.difficulty_window = None
+        self.questions_window = None
+        self.leaderboard_window = None
+        
+        # Create class scope variables.
+        self.correct_answer = ""
+        self.current_difficulty = "basic"
+        self.score = 0
+        self.questions_answered = 0
+        self.time_left = 10
+
+        # Setup for the instructions window.
+        self.instructions_window = Tk()
+        self.instructions_window.title("Instructions")
+        self.instructions_window.geometry("500x400")
+        self.instructions_window.resizable(False, False)
+
+        # Setup for the difficulty window.
+        self.difficulty_window = Toplevel(self.instructions_window)
+        self.difficulty_window.title("Difficulty")
+        self.difficulty_window.geometry("500x400")
+        self.difficulty_window.resizable(False, False)
+        self.difficulty_window.withdraw()
+
+        # Setup for the questions window.
+        self.question_window = Toplevel(self.instructions_window)
+        self.question_window.title("Questions")
+        self.question_window.geometry("500x400")
+        self.question_window.resizable(False, False)
+        self.question_window.withdraw()
+
+        # Setup for the leaderboard window.
+        self.leaderboard_window = Toplevel(self.instructions_window)
+        self.leaderboard_window.title("Questions")
+        self.leaderboard_window.geometry("500x400")
+        self.leaderboard_window.resizable(False, False)
+        self.leaderboard_window.withdraw()
+
+        self.create_instructions_window()
+        self.instructions_window.mainloop()
 
 
     # This is a function that creates the instructions window.
-    def create_instructions_window():
-        # Define global variables.
-        global name_entry
+    def create_instructions_window(self):
 
-        # Create the labels.
-        Label(instructions_window, text = "Maths Quiz", font = FONT_HEADER).place(relx = 0.5, rely = 0.15, anchor = "center")
-        Label(instructions_window, text = "Try your best to answer all the questions!", font = FONT_LABEL).place(relx = 0.5, rely = 0.3, anchor = "center")
-        Label(instructions_window, text = "What is your name?", font = FONT_LABEL).place(relx = 0.5, rely = 0.45, anchor = "center")
+        # This hides the leaderboard window.
+        self.leaderboard_window.withdraw()
+        
+        # Load and resize the background image.
+        original_image = Image.open("background.png")
+        resized_image = original_image.resize((500, 400))
+        self.instructions_background_colour = ImageTk.PhotoImage(resized_image)
 
-        # Create the name entry.
-        name_entry = Entry(instructions_window, justify = "center", font = FONT_LABEL)
-        name_entry.place(relx = 0.5, rely = 0.55, anchor = "center")
+        # Set up the canvas.
+        self.instructions_canvas = Canvas(self.instructions_window, highlightthickness = 0)
+        self.instructions_canvas.place(x = 0, y = 0, width = 500, height = 400)
+
+        # Draw the background image.
+        self.instructions_canvas.create_image(0, 0, image = self.instructions_background_colour, anchor = "nw")
+
+        # Create the text.
+        self.instructions_canvas.create_text(250, 60, text = "Maths Quiz", font = self.FONT_HEADER)
+        self.instructions_canvas.create_text(250, 120, text = "Try your best to answer all the questions!", font = self.FONT_LABEL)
+        self.instructions_canvas.create_text(250, 180, text = "What is your name?", font = self.FONT_LABEL)
+
+        # Create the entry.
+        self.name_entry = Entry(self.instructions_window, justify = "center", font = self.FONT_LABEL)
+        self.instructions_canvas.create_window(250, 220, window = self.name_entry)
 
         # Create the buttons.
-        Button(instructions_window, text = "Start", command = name_verification, font = FONT_BUTTON, width = 10).place(relx = 0.5, rely = 0.7, anchor = "center")
-        Button(instructions_window, text = "Quit", command = quit_button, font = FONT_BUTTON, width = 10).place(relx = 0.5, rely = 0.85, anchor = "center")
+        start_button = Button(self.instructions_window, text = "Start", command = self.name_verification, font = self.FONT_BUTTON, width = 10)
+        self.instructions_canvas.create_window(250, 280, window = start_button)
+
+        quit_button = Button(self.instructions_window, text = "Quit", command = self.quit_button, font = self.FONT_BUTTON, width = 10)
+        self.instructions_canvas.create_window(250, 340, window = quit_button)
 
 
     # This is a function that creates the difficulty window.
-    def create_difficulty_window():
+    def create_difficulty_window(self):
+
         # This hides the instructions window and unhides the difficulty window.
-        difficulty_window.deiconify()
-        instructions_window.withdraw()
+        self.difficulty_window.deiconify()
+        self.instructions_window.withdraw()
+
+        # Load and resize the background image.
+        original_image = Image.open("background.png")
+        resized_image = original_image.resize((500, 400))
+        self.difficulty_background_colour = ImageTk.PhotoImage(resized_image)
+
+        # Set up the canvas.
+        self.difficulty_canvas = Canvas(self.difficulty_window, highlightthickness = 0)
+        self.difficulty_canvas.place(x = 0, y = 0, width = 500, height = 400)
+
+        # Draw the background image.
+        self.difficulty_canvas.create_image(0, 0, image = self.difficulty_background_colour, anchor = "nw")
 
         # Create the labels.
-        Label(difficulty_window, text = "Difficulty", font = FONT_HEADER).place(relx = 0.5, rely = 0.15, anchor = "center")
-        Label(difficulty_window, text = "Which difficulty would you like to choose!", font = FONT_LABEL).place(relx = 0.5, rely = 0.3, anchor = "center")
+        self.difficulty_canvas.create_text(250, 60, text = "Difficulty", font = self.FONT_HEADER)
+
+        self.difficulty_canvas.create_text(250, 120, text = "Which difficulty would you like to choose!", font = self.FONT_LABEL)
 
         # Create the buttons.
-        Button(difficulty_window, text = "Basic", command = basic_questions, font = FONT_BUTTON, width = 10).place(relx = 0.5, rely = 0.5, anchor = "center")
-        Button(difficulty_window, text = "Advanced", command = advanced_questions, font = FONT_BUTTON, width = 10).place(relx = 0.5, rely = 0.65, anchor = "center")
-        Button(difficulty_window, text = "Expert", command = expert_questions, font = FONT_BUTTON, width = 10).place(relx = 0.5, rely = 0.8, anchor = "center")
+        basic_button = Button(self.difficulty_window, text = "Basic", command = self.basic_questions, font = self.FONT_BUTTON, width = 10)
+        self.difficulty_canvas.create_window(250, 200, window = basic_button)
 
+        advanced_button = Button(self.difficulty_window, text = "Advanced", command = self.advanced_questions, font = self.FONT_BUTTON, width = 10)
+        self.difficulty_canvas.create_window(250, 260, window = advanced_button)
+
+        expert_button = Button(self.difficulty_window, text = "Expert", command = self.expert_questions, font = self.FONT_BUTTON, width = 10)
+        self.difficulty_canvas.create_window(250, 320, window = expert_button)
 
     # This is a function that creates the questions window.
-    def create_questions_window():
-        # Define global variables.
-        global question_label, answer_entry
+    def create_questions_window(self):
 
-        # This hides the difficulty window and unhides the questions window.
-        question_window.deiconify()
-        difficulty_window.withdraw()
+        # Hide the difficulty window and unhide the questions window.
+        self.question_window.deiconify()
+        self.difficulty_window.withdraw()
+
+        # Load and resize the background image.
+        original_image = Image.open("background.png")
+        resized_image = original_image.resize((500, 400))
+        self.questions_background_colour = ImageTk.PhotoImage(resized_image)
+
+        # Set up the canvas.
+        self.questions_canvas = Canvas(self.question_window, highlightthickness = 0)
+        self.questions_canvas.place(x = 0, y = 0, width = 500, height = 400)
+
+        # Draw the background image.
+        self.questions_canvas.create_image(0, 0, image = self.questions_background_colour, anchor = "nw")
 
         # Create the header label.
-        Label(question_window, text = "Questions", font = FONT_HEADER).place(relx = 0.5, rely = 0.15, anchor = "center")
+        self.questions_canvas.create_text(250, 60, text = "Questions", font = self.FONT_HEADER)
 
-        # Create the question label which is constantly changing.
-        question_label = Label(question_window, text = "", font = FONT_LABEL)
-        question_label.place(relx = 0.5, rely = 0.35, anchor = "center")
+        # Create the question label which will be updated.
+        self.question_text = self.questions_canvas.create_text(250, 140, text = "", font = self.FONT_LABEL)
 
         # Create the answer entry.
-        answer_entry = Entry(question_window, justify = "center", font = FONT_LABEL)
-        answer_entry.place(relx = 0.5, rely = 0.5, anchor = "center")
+        self.answer_entry = Entry(self.question_window, justify = "center", font = self.FONT_LABEL)
+        self.questions_canvas.create_window(250, 200, window = self.answer_entry)
+
+        # Binds the enter key to submit.
+        self.answer_entry.bind("<Return>", lambda event: self.submit_answer())
 
         # Create the buttons.
-        Button(question_window, text = "Submit", command = submit_answer, font = FONT_BUTTON, width = 10).place(relx = 0.5, rely = 0.65, anchor = "center")
-        Button(question_window, text = "Quit", command = quit_button, font = FONT_BUTTON, width = 10).place(relx = 0.5, rely = 0.8, anchor = "center")
+        submit_button = Button(self.question_window, text = "Submit", command = self.submit_answer, font = self.FONT_BUTTON, width = 10)
+        self.questions_canvas.create_window(250, 260, window = submit_button)
+
+        quit_button = Button(self.question_window, text = "Quit", command = self.quit_button, font = self.FONT_BUTTON, width = 10)
+        self.questions_canvas.create_window(250, 320, window = quit_button)
+
+        # Create the timer directly on the canvas.
+        self.timer_text = self.questions_canvas.create_text(250, 360, text = "Time Left: 10s", font = self.FONT_LABEL)
+
+        # Start the timer.
+        self.update_timer()
+
+
+    # This is a function that creates the leaderboard window.
+    def create_leaderboard_window(self):
+
+        # This hides the instructions window and unhides the difficulty window.
+        self.leaderboard_window.deiconify()
+        if self.questions_window is not None:
+            self.questions_window.withdraw()
+
+        # Load and resize the background image.
+        original_image = Image.open("background.png")
+        resized_image = original_image.resize((500, 400))
+        self.leaderboard_background_colour = ImageTk.PhotoImage(resized_image)
+
+        # Set up the canvas.
+        self.leaderboard_canvas = Canvas(self.leaderboard_window, highlightthickness = 0)
+        self.leaderboard_canvas.place(x = 0, y = 0, width = 500, height = 400)
+
+        # Draw the background image.
+        self.leaderboard_canvas.create_image(0, 0, image = self.leaderboard_background_colour, anchor = "nw")
+
+        # Create the labels.
+        self.leaderboard_canvas.create_text(250, 60, text = "Leaderboard", font = self.FONT_HEADER)
+        self.leaderboard_canvas.create_text(150, 120, text = "Name", font = self.FONT_LABEL)
+        self.leaderboard_canvas.create_text(350, 120, text = "Score", font = self.FONT_LABEL)
+
+        # Create the buttons.
+        self.restart_button = Button(self.leaderboard_window, text = "Restart", command = self.restart_quiz, width = 10).place(relx = 0.5, rely = 0.8, anchor = "center")
+        self.quit_button = Button(self.leaderboard_window, text = "Quit", command = self.quit_button, width = 10).place(relx = 0.5, rely = 0.9, anchor = "center")
+        
+
+    # This is a function that updates the timer.
+    def update_timer(self):
+
+        # If there is still time left, reduce the time by one second and display it on the label.
+        if self.time_left > 0:
+            self.time_left -= 1
+            self.questions_canvas.itemconfig(self.timer_text, text = f"Time Left: {self.time_left}s")
+            self.timer_id = self.question_window.after(1000, self.update_timer)
+
+        # If there is no time left, end the quiz.
+        else:
+            self.end_quiz()
+            
+
+    # This is a function that appears when the quiz is over.
+    def end_quiz(self):
+
+        # Cancel the timer.
+        if hasattr(self, 'timer_id'):
+            self.question_window.after_cancel(self.timer_id)
+ 
+        # Show the user their score.
+        messagebox.showinfo("Score", f"Your score is {self.score} out of {self.questions_answered} questions answered.")
+
+        # Call the leaderboard function.
+        self.create_leaderboard_window()
+
+
+    # This is a function that restarts the quiz.
+    def restart_quiz(self):
+
+        # Cancel the timer.
+        if hasattr(self, 'timer_id'):
+            self.question_window.after_cancel(self.timer_id)
+
+        # Reset variables.
+        self.score = 0
+        self.questions_answered = 0
+        self.time_left = 10
+
+        # This hides the question and leaderboard window and unhides the instructions window.
+        self.question_window.withdraw()
+        self.leaderboard_window.withdraw()
+        self.instructions_window.deiconify()
 
 
     # This is a function that asks the user if they're sure they want to quit.
-    def quit_button():
+    def quit_button(self):
+
         # This asks the user if they're sure they want to quit.
         confirm = messagebox.askyesno("Confirm Quit", "Are you sure you want to quit?")
 
         # If they say yes, the program closes.
         if confirm:
-            instructions_window.destroy()
-            difficulty_window.destroy()
-            question_window.destroy()
+            self.instructions_window.destroy()
 
 
     # This is a function to validate the name entry.
-    def name_verification():
+    def name_verification(self):
+
         # This capitalises the name entry.
-        name = name_entry.get().title()
+        name = self.name_entry.get().title()
 
         # Checks if the name is an alphabet.
         if name.replace(" ", "").replace("-", "").replace("'", "").isalpha():
             # If the name is valid, create the next window.
-            create_difficulty_window()
-
-        # If the name is invalid, an error message appears.
+            self.create_difficulty_window()
         else:
             # Create the error message.
             messagebox.showinfo("Invalid Name", "❌ Please enter a valid name!")
-
-            # Deletes the entry box and resets the focus.
-            name_entry.delete(0, END)
-            name_entry.focus()
+            self.name_entry.delete(0, END)
+            self.name_entry.focus()
 
 
     # This is a function that validates the answer entry.
-    def validator(user_input):
+    def validator(self, user_input):
+
         # Checks if the entry has any digits.
         if user_input.replace("-", "").isdigit() == False:
             # Checks if the entry has any letters of the alphabet and show an error message.
@@ -145,17 +316,15 @@ def main():
             return True
 
         # Deletes the entry box and resets the focus.
-        answer_entry.delete(0, END)
-        answer_entry.focus()
+        self.answer_entry.delete(0, END)
+        self.answer_entry.focus()
 
         # If the entry is invalid, return false.
         return False
 
 
     # This is a function that generates randomised basic questions.
-    def generate_basic_question():
-        # Define non local variables.
-        nonlocal correct_answer
+    def generate_basic_question(self):
 
         # Creates random numbers.
         num1 = random.randint(1, 12)
@@ -164,48 +333,44 @@ def main():
 
         # Creates an addition question.
         if question_type == 1:
-            correct_answer = num1 + num2
+            self.correct_answer = num1 + num2
             return f"What is {num1} + {num2}?"
 
         # Creates a subtraction question.
         elif question_type == 2:
-            correct_answer = num1 - num2
+            self.correct_answer = num1 - num2
             return f"What is {num1} - {num2}?"
 
         # Creates a multiplication question.
         elif question_type == 3:
-            correct_answer = num1 * num2
+            self.correct_answer = num1 * num2
             return f"What is {num1} × {num2}?"
 
         # Creates a division question.
         else:
             num1 *= num2
-            correct_answer = num1 // num2
+            self.correct_answer = num1 // num2
             return f"What is {num1} ÷ {num2}?"
 
 
     # This is a function that creates the questions window.
-    def basic_questions():
-        # Define non local variables.
-        nonlocal current_difficulty
+    def basic_questions(self):
 
         # Set the current difficulty to basic.
-        current_difficulty = "basic"
+        self.current_difficulty = "basic"
 
         # Calls the create questions window function.
-        create_questions_window()
+        self.create_questions_window()
 
         # Changes the label to the question generated in another function.
-        question_label.config(text = generate_basic_question())
+        self.questions_canvas.itemconfig(self.question_text, text = self.generate_basic_question())
 
         # Deletes the answer entry and resets the focus.
-        answer_entry.delete(0, END)
-        answer_entry.focus()
+        self.answer_entry.delete(0, END)
+        self.answer_entry.focus()
 
     # This is a function that generates randomised advanced questions.
-    def generate_advanced_question():
-        # Define non local variables.
-        nonlocal correct_answer
+    def generate_advanced_question(self):
 
         # Determines which type of question will be asked.
         question_type = random.randint(1, 5)
@@ -214,61 +379,57 @@ def main():
         if question_type == 1:
             num1 = random.randint(100, 500)
             num2 = random.randint(100, 500)
-            correct_answer = num1 + num2
+            self.correct_answer = num1 + num2
             return f"What is {num1} + {num2}?"
 
         # Creates a subtraction question.
         elif question_type == 2:
             num1 = random.randint(100, 500)
             num2 = random.randint(1, 100)
-            correct_answer = num1 - num2
+            self.correct_answer = num1 - num2
             return f"What is {num1} - {num2}?"
 
         # Creates a multiplication question.
         elif question_type == 3:
             num1 = random.randint(12, 30)
             num2 = random.randint(12, 30)
-            correct_answer = num1 * num2
+            self.correct_answer = num1 * num2
             return f"What is {num1} × {num2}?"
 
         # Creates a division question.
         elif question_type == 4:
             num2 = random.randint(12, 20)
-            correct_answer = random.randint(12, 20)
-            num1 = num2 * correct_answer
+            self.correct_answer = random.randint(12, 20)
+            num1 = num2 * self.correct_answer
             return f"What is {num1} ÷ {num2}?"
 
         # Creates a power question.
         else:
-            base = random.randint(2, 10)
+            base = random.randint(2, 5)
             exponent = random.randint(2, 4)
-            correct_answer = base ** exponent
+            self.correct_answer = base ** exponent
             return f"What is {base} ^ {exponent}?"
 
 
     # This is a function that creates the questions window.
-    def advanced_questions():
-        # Define non local variables.
-        nonlocal current_difficulty
+    def advanced_questions(self):
 
         # Set the current difficulty to advanced.
-        current_difficulty = "advanced"
+        self.current_difficulty = "advanced"
 
         # Calls the create questions window function.
-        create_questions_window()
+        self.create_questions_window()
 
         # Changes the label to the question generated in another function.
-        question_label.config(text = generate_advanced_question())
+        self.questions_canvas.itemconfig(self.question_text, text = self.generate_advanced_question())
 
         # Deletes the answer entry and resets the focus.
-        answer_entry.delete(0, END)
-        answer_entry.focus()
+        self.answer_entry.delete(0, END)
+        self.answer_entry.focus()
 
 
     # This is a function that generates randomised expert questions.
-    def generate_expert_question():
-        # Define non local variables.
-        nonlocal correct_answer
+    def generate_expert_question(self):
 
         # Determines which type of question will be asked.
         question_type = random.randint(1, 2)
@@ -283,20 +444,19 @@ def main():
             # Removes the 1 from the beginning of the answer.
             if new_exponent == 1:
                 if new_coefficient == 1:
-                    correct_answer = "x"
-                    
+                    self.correct_answer = "x"
                 else:
-                    correct_answer = f"{new_coefficient}x"
+                    self.correct_answer = f"{new_coefficient}x"
 
             # Removes the ^1 from the answer.
             elif new_exponent == 0:
-                correct_answer = f"{new_coefficient}"
+                self.correct_answer = f"{new_coefficient}"
 
             else:
                 if new_coefficient == 1:
-                    correct_answer = f"x^{new_exponent}"
+                    self.correct_answer = f"x^{new_exponent}"
                 else:
-                    correct_answer = f"{new_coefficient}x^{new_exponent}"
+                    self.correct_answer = f"{new_coefficient}x^{new_exponent}"
 
             # Returns the question being asked.
             return f"What is the derivative of {coefficient}x^{exponent}?"
@@ -314,97 +474,80 @@ def main():
             # Simplifies the answer.
             if simplified_denominator == 1:
                 if simplified_coeffecient == 1:
-                    correct_answer = f"x^{new_exponent}"
+                    self.correct_answer = f"x^{new_exponent}"
                 else:
-                    correct_answer = f"{simplified_coeffecient}x^{new_exponent}"
+                    self.correct_answer = f"{simplified_coeffecient}x^{new_exponent}"
             else:
                 if simplified_coeffecient == 1:
-                    correct_answer = f"x^{new_exponent}/{simplified_denominator}"
+                    self.correct_answer = f"x^{new_exponent}/{simplified_denominator}"
                 else:
-                    correct_answer = f"{simplified_coeffecient}x^{new_exponent}/{simplified_denominator}"
+                    self.correct_answer = f"{simplified_coeffecient}x^{new_exponent}/{simplified_denominator}"
 
             # Returns the question being asked.
             return f"Integrate {coefficient}x^{exponent}"
 
+
     # This is a function that creates the questions window.
-    def expert_questions():
-        # Define non local variables.
-        nonlocal current_difficulty
+    def expert_questions(self):
 
         # Set the current difficulty to expert.
-        current_difficulty = "expert"
+        self.current_difficulty = "expert"
 
         # Calls the create questions window function.
-        create_questions_window()
+        self.create_questions_window()
 
         # Changes the label to the question generated in another function.
-        question_label.config(text = generate_expert_question())
+        self.questions_canvas.itemconfig(self.question_text, text = self.generate_expert_question())
 
         # Deletes the answer entry and resets the focus.
-        answer_entry.delete(0, END)
-        answer_entry.focus()
+        self.answer_entry.delete(0, END)
+        self.answer_entry.focus()
+
 
     # This is a function that checks whether the user got the answer correct.
-    def submit_answer():
+    def submit_answer(self):
         # Gets the answer entry.
-        user_input = answer_entry.get()
+        user_input = self.answer_entry.get()
 
         # Checks if the answer is valid, expert difficulty answers are bypassed.
-        if current_difficulty == "expert" or validator(user_input):
-            if current_difficulty == "expert":
+        if self.current_difficulty == "expert" or self.validator(user_input):
+            if self.current_difficulty == "expert":
                 user_input_clean = user_input.replace(" ", "").lower()
-                correct_clean = str(correct_answer).replace(" ", "").lower()
+                correct_clean = str(self.correct_answer).replace(" ", "").lower()
                 # Checks if the answer is correct.
                 if user_input_clean == correct_clean:
                     messagebox.showinfo("Correct!", "✅ Correct!")
-                    
+                    self.score += 1
+
                 else:
-                    messagebox.showinfo("Incorrect", f"❌ The correct answer was {correct_answer}.")
+                    messagebox.showinfo("Incorrect", f"❌ The correct answer was {self.correct_answer}.")
             else:
                 # Checks if the answer is correct.
-                if int(user_input) == correct_answer:
+                if int(user_input) == self.correct_answer:
                     messagebox.showinfo("Correct!", "✅ Correct!")
-                    
+                    self.score += 1
+
                 else:
-                    messagebox.showinfo("Incorrect", f"❌ The correct answer was {correct_answer}.")
+                    messagebox.showinfo("Incorrect", f"❌ The correct answer was {self.correct_answer}.")
 
             # Generates another question.
-            if current_difficulty == "basic":
-                question_label.config(text = generate_basic_question())
-                
-            elif current_difficulty == "advanced":
-                question_label.config(text = generate_advanced_question())
-                
+            if self.current_difficulty == "basic":
+                self.questions_canvas.itemconfig(self.question_text, text = self.generate_basic_question())
+
+            elif self.current_difficulty == "advanced":
+                self.questions_canvas.itemconfig(self.question_text, text = self.generate_advanced_question())
+
             else:
-                question_label.config(text = generate_expert_question())
+                self.questions_canvas.itemconfig(self.question_text, text = self.generate_expert_question())
+
+            # Increases the questions answered variable by 1.
+            self.questions_answered += 1
 
             # Deletes the answer entry and resets the focus.
-            answer_entry.delete(0, END)
-            answer_entry.focus()
+            self.answer_entry.delete(0, END)
+            self.answer_entry.focus()
 
 
-    # Setup for the instructions window.
-    instructions_window = Tk()
-    instructions_window.title("Instructions")
-    instructions_window.geometry("500x400")
-    instructions_window.resizable(True, True)
-
-    # Setup for the difficulty window.
-    difficulty_window = Tk()
-    difficulty_window.title("Difficulty")
-    difficulty_window.geometry("500x400")
-    difficulty_window.resizable(True, True)
-    difficulty_window.withdraw()
-
-    # Setup for the questions window.
-    question_window = Tk()
-    question_window.title("Questions")
-    question_window.geometry("500x400")
-    question_window.resizable(True, True)
-    question_window.withdraw()
-
-    create_instructions_window()
-    instructions_window.mainloop()
-
-# Runs the program.
-main()
+if __name__ == "__main__":
+    app = MathsQuiz()
+    app.initialise()
