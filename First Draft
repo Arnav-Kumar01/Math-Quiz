@@ -74,7 +74,7 @@ class MathsQuiz:
         self.FONT_BUTTON = ("Times New Roman", 18)
 
         self.difficulty_window = None
-        self.questions_window = None
+        self.question_window = None
         self.leaderboard_window = None
         
         # Create class scope variables.
@@ -110,8 +110,14 @@ class MathsQuiz:
         self.leaderboard_window.geometry("500x400")
         self.leaderboard_window.resizable(False, False)
         self.leaderboard_window.withdraw()
-
         self.leaderboard = Leaderboard()
+
+        # Setup for the answers window.
+        self.answers_window = Toplevel(self.leaderboard_window)
+        self.answers_window.title("Answers")
+        self.answers_window.geometry("600x600")
+        self.answers_window.resizable(False, False)
+        self.answers_window.withdraw()
 
         self.create_instructions_window()
         self.instructions_window.mainloop()
@@ -122,6 +128,9 @@ class MathsQuiz:
 
         # This hides the leaderboard window.
         self.leaderboard_window.withdraw()
+
+        # Clears the answer log.
+        self.answer_log = []
         
         # Load and resize the background image.
         original_image = Image.open("background.png")
@@ -235,10 +244,8 @@ class MathsQuiz:
     # This is a function that creates the leaderboard window.
     def create_leaderboard_window(self):
 
-        # This hides the question window and unhides the leaderboard window.
+        # This unhides the leaderboard window.
         self.leaderboard_window.deiconify()
-        if self.questions_window is not None:
-            self.questions_window.withdraw()
 
         # Load and resize the background image.
         original_image = Image.open("background.png")
@@ -257,24 +264,62 @@ class MathsQuiz:
         self.leaderboard_canvas.create_text(175, 100, text = "Rank", font = self.LEADERBOARD_LABEL, anchor = "e")
         self.leaderboard_canvas.create_text(210, 100, text = "Name", font = self.LEADERBOARD_LABEL,  anchor = "w")
         self.leaderboard_canvas.create_text(350, 100, text = "Score", font = self.LEADERBOARD_LABEL)
-        
+
+        # Get the top scores from the csv file.
         top_10 = self.leaderboard.get_top_scores()
 
         # For loop to place all the values on the leaderboard window
         for i, (name, score) in enumerate(top_10, start = 1):
             y_position = 120 + (i - 1) * 20
-            self.leaderboard_canvas.create_text(175, y_position, text = f"{i}.", font =self.FONT_LABEL, anchor = "e")
+            self.leaderboard_canvas.create_text(175, y_position, text = f"{i}.", font = self.FONT_LABEL, anchor = "e")
             self.leaderboard_canvas.create_text(210, y_position, text = name, font = self.FONT_LABEL, anchor = "w")
             self.leaderboard_canvas.create_text(350, y_position, text = str(score), font = self.FONT_LABEL, anchor = "center")
 
         # Create the buttons.
         restart_button = Button(self.leaderboard_window, text = "Restart", command = self.restart_quiz, font = self.FONT_BUTTON, width = 10)
-        self.leaderboard_canvas.create_window(175, 350, window = restart_button)
+        self.leaderboard_canvas.create_window(100, 350, window = restart_button)
 
         quit_button = Button(self.leaderboard_window, text = "Quit", command = self.quit_button, font = self.FONT_BUTTON, width = 10)
-        self.leaderboard_canvas.create_window(325, 350, window = quit_button)
+        self.leaderboard_canvas.create_window(250, 350, window = quit_button)
+
+        show_answers_button = Button(self.leaderboard_window, text = "Answers", command = self.show_answers, font = self.FONT_BUTTON, width = 10)
+        self.leaderboard_canvas.create_window(400, 350, window = show_answers_button)
         
-            
+
+    # This is a function that shows the answers after the user finishes the quiz.
+    def show_answers(self):
+
+        # Unhides the answers window.
+        self.answers_window.deiconify()
+        
+        # If the canvas already exists, clear it.
+        if hasattr(self, 'answers_canvas'):
+            self.answers_canvas.delete("all")  
+
+        # Otherwise, create the canvas.
+        else:
+            self.answers_canvas = Canvas(self.answers_window)
+            self.answers_canvas.pack(fill = BOTH, expand = True)
+
+        # Create the buttons.
+        restart_button = Button(self.answers_window, text = "Restart", command = self.restart_quiz, font = self.FONT_BUTTON, width = 10)
+        self.answers_canvas.create_window(150, 550, window = restart_button)
+
+        quit_button = Button(self.answers_window, text = "Quit", command = self.quit_button, font = self.FONT_BUTTON, width = 10)
+        self.answers_canvas.create_window(300, 550, window = quit_button)
+
+        print_button = Button(self.answers_window, text = "Print", font = self.FONT_BUTTON, width = 10)
+        self.answers_canvas.create_window(450, 550, window = print_button)
+
+        # Set the initial y value.
+        y = 20
+
+        # For loop to print all the items in the list.
+        for entry in self.answer_log:
+            colour = "green" if entry["is_correct"] else "red"
+            self.answers_canvas.create_text(10, y, anchor = "w", text = f"Q: {entry['question']}  |  Your Answer: {entry['user_answer']}  |  Correct: {entry['correct_answer']}", font = self.FONT_LABEL, fill = colour)
+            y += 20
+
     # This is a function that sets up the difficulty and generates questions based on what the user has chosen.
     def start_quiz(self, difficulty, question_generator):
 
@@ -295,6 +340,9 @@ class MathsQuiz:
     # This is a function that appears when the quiz is over.
     def end_quiz(self):
 
+        # This hides the question window. 
+        self.question_window.withdraw()
+        
         # Cancel the timer.
         if hasattr(self, 'timer_id'):
             self.question_window.after_cancel(self.timer_id)
@@ -320,10 +368,12 @@ class MathsQuiz:
         self.score = 0
         self.questions_answered = 0
         self.time_left = 10
+        self.answer_log = []
 
-        # This hides the question and leaderboard window and unhides the instructions window.
+        # This hides the question, leaderboard, and answers window and unhides the instructions window.
         self.question_window.withdraw()
         self.leaderboard_window.withdraw()
+        self.answers_window.withdraw()
         self.instructions_window.deiconify()
 
 
@@ -404,21 +454,22 @@ class MathsQuiz:
             if self.current_difficulty == "expert":
                 user_input_clean = user_input.replace(" ", "").lower()
                 correct_clean = str(self.correct_answer).replace(" ", "").lower()
-                # Checks if the answer is correct.
-                if user_input_clean == correct_clean:
-                    messagebox.showinfo("Correct!", "✅ Correct!")
-                    self.score += 1
+                is_correct = (user_input_clean == correct_clean)
 
-                else:
-                    messagebox.showinfo("Incorrect", f"❌ The correct answer was {self.correct_answer}.")
             else:
-                # Checks if the answer is correct.
-                if int(user_input) == self.correct_answer:
-                    messagebox.showinfo("Correct!", "✅ Correct!")
-                    self.score += 1
+                is_correct = (int(user_input) == self.correct_answer)
 
-                else:
-                    messagebox.showinfo("Incorrect", f"❌ The correct answer was {self.correct_answer}.")
+            # Add things to the answer log list.
+            self.answer_log.append({
+                "question": self.questions_canvas.itemcget(self.question_text, "text"),
+                "user_answer": user_input,
+                "correct_answer": self.correct_answer,
+                "is_correct": is_correct
+            })
+
+            # Increase the score by 1.
+            if is_correct:
+                self.score += 1
 
             # Generates another question.
             if self.current_difficulty == "basic":
