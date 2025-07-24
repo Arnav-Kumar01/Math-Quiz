@@ -2,7 +2,7 @@
 Project Name: Maths Quiz
 Author: Arnav Kumar
 Date Created: 11/06/2025
-Last Modified: 19/07/2025
+Last Modified: 24/07/2025
 Description: This is a program to help students learn and practice maths.
 Language Used: Python 3.10
 Files Required: None
@@ -53,11 +53,7 @@ class Leaderboard:
             reader = list(csv.reader(file))[1:]
 
             # Sorts the scores from highest to lowest.
-            return sorted(
-                [(row[0], int(row[1])) for row in reader if len(row) == 2 and row[1].isdigit()],
-                key = lambda x: x[1],
-                reverse = True
-            )[:limit]
+            return sorted([(row[0], int(row[1])) for row in reader if len(row) == 2 and row[1].isdigit()], key = lambda x: x[1], reverse = True)[:limit]
 
 
 
@@ -73,6 +69,12 @@ class MathsQuiz:
         self.LEADERBOARD_LABEL = ("Times New Roman", 14, "bold")
         self.FONT_BUTTON = ("Times New Roman", 18)
 
+        # Blue colour theme.
+        self.TEXT_COLOUR = "#23007d"
+        self.BUTTON_BACKGROUND = "#c7ffe4"
+        self.BUTTON_FOREGROUND = "#23007d"
+        self.BUTTON_ACTIVE_BACKGROUND = "#b1e2e2" 
+
         self.difficulty_window = None
         self.question_window = None
         self.leaderboard_window = None
@@ -82,7 +84,7 @@ class MathsQuiz:
         self.current_difficulty = "basic"
         self.score = 0
         self.questions_answered = 0
-        self.time_left = 10
+        self.time_left = 30
 
         # Setup for the instructions window.
         self.instructions_window = Tk()
@@ -145,19 +147,22 @@ class MathsQuiz:
         self.instructions_canvas.create_image(0, 0, image = self.instructions_background_colour, anchor = "nw")
 
         # Create the text.
-        self.instructions_canvas.create_text(250, 60, text = "Maths Quiz", font = self.FONT_HEADER)
-        self.instructions_canvas.create_text(250, 120, text = "Try your best to answer all the questions!", font = self.FONT_LABEL)
-        self.instructions_canvas.create_text(250, 180, text = "What is your name?", font = self.FONT_LABEL)
+        self.instructions_canvas.create_text(250, 60, text = "Maths Quiz", font = self.FONT_HEADER, fill = self.TEXT_COLOUR)
+        self.instructions_canvas.create_text(250, 120, text = "Try your best to answer all the questions!", font = self.FONT_LABEL, fill = self.TEXT_COLOUR)
+        self.instructions_canvas.create_text(250, 180, text = "What is your name?", font = self.FONT_LABEL, fill = self.TEXT_COLOUR)
 
         # Create the entry.
         self.name_entry = Entry(self.instructions_window, justify = "center", font = self.FONT_LABEL)
         self.instructions_canvas.create_window(250, 220, window = self.name_entry)
 
+        # Binds the enter key to start.
+        self.name_entry.bind("<Return>", lambda event: self.name_verification())
+
         # Create the buttons.
-        start_button = Button(self.instructions_window, text = "Start", command = self.name_verification, font = self.FONT_BUTTON, width = 10)
+        start_button = Button(self.instructions_window, text = "Start", command = self.name_verification, font = self.FONT_BUTTON, bg = self.BUTTON_BACKGROUND, fg = self.BUTTON_FOREGROUND, activebackground = self.BUTTON_ACTIVE_BACKGROUND, width = 10)
         self.instructions_canvas.create_window(250, 280, window = start_button)
 
-        quit_button = Button(self.instructions_window, text = "Quit", command = self.quit_button, font = self.FONT_BUTTON, width = 10)
+        quit_button = Button(self.instructions_window, text = "Quit", command = self.quit_button, font = self.FONT_BUTTON, bg = self.BUTTON_BACKGROUND, fg = self.BUTTON_FOREGROUND, activebackground = self.BUTTON_ACTIVE_BACKGROUND, width = 10)
         self.instructions_canvas.create_window(250, 340, window = quit_button)
 
 
@@ -181,18 +186,18 @@ class MathsQuiz:
         self.difficulty_canvas.create_image(0, 0, image = self.difficulty_background_colour, anchor = "nw")
 
         # Create the labels.
-        self.difficulty_canvas.create_text(250, 60, text = "Difficulty", font = self.FONT_HEADER)
+        self.difficulty_canvas.create_text(250, 60, text = "Difficulty", font = self.FONT_HEADER, fill = self.TEXT_COLOUR)
 
-        self.difficulty_canvas.create_text(250, 120, text = "Which difficulty would you like to choose!", font = self.FONT_LABEL)
+        self.difficulty_canvas.create_text(250, 120, text = "Which difficulty would you like to choose!", font = self.FONT_LABEL, fill = self.TEXT_COLOUR)
 
         # Create the buttons.
-        basic_button = Button(self.difficulty_window, text = "Basic", command = self.basic_questions, font = self.FONT_BUTTON, width = 10)
+        basic_button = Button(self.difficulty_window, text = "Basic", command = self.basic_questions, font = self.FONT_BUTTON, bg = self.BUTTON_BACKGROUND, fg = self.BUTTON_FOREGROUND, activebackground = self.BUTTON_ACTIVE_BACKGROUND, width = 10)
         self.difficulty_canvas.create_window(250, 200, window = basic_button)
 
-        advanced_button = Button(self.difficulty_window, text = "Advanced", command = self.advanced_questions, font = self.FONT_BUTTON, width = 10)
+        advanced_button = Button(self.difficulty_window, text = "Advanced", command = self.advanced_questions, font = self.FONT_BUTTON, bg = self.BUTTON_BACKGROUND, fg = self.BUTTON_FOREGROUND, activebackground = self.BUTTON_ACTIVE_BACKGROUND, width = 10)
         self.difficulty_canvas.create_window(250, 260, window = advanced_button)
 
-        expert_button = Button(self.difficulty_window, text = "Expert", command = self.expert_questions, font = self.FONT_BUTTON, width = 10)
+        expert_button = Button(self.difficulty_window, text = "Expert", command = self.expert_questions, font = self.FONT_BUTTON, bg = self.BUTTON_BACKGROUND, fg = self.BUTTON_FOREGROUND, activebackground = self.BUTTON_ACTIVE_BACKGROUND, width = 10)
         self.difficulty_canvas.create_window(250, 320, window = expert_button)
 
     # This is a function that creates the questions window.
@@ -214,11 +219,10 @@ class MathsQuiz:
         # Draw the background image.
         self.questions_canvas.create_image(0, 0, image = self.questions_background_colour, anchor = "nw")
 
-        # Create the header label.
-        self.questions_canvas.create_text(250, 60, text = "Questions", font = self.FONT_HEADER)
+        # Create the labels.
+        self.questions_canvas.create_text(250, 60, text = "Questions", font = self.FONT_HEADER, fill = self.TEXT_COLOUR)
 
-        # Create the question label which will be updated.
-        self.question_text = self.questions_canvas.create_text(250, 140, text = "", font = self.FONT_LABEL)
+        self.question_text = self.questions_canvas.create_text(250, 140, text = "", font = self.FONT_LABEL, fill = self.TEXT_COLOUR)
 
         # Create the answer entry.
         self.answer_entry = Entry(self.question_window, justify = "center", font = self.FONT_LABEL)
@@ -228,14 +232,14 @@ class MathsQuiz:
         self.answer_entry.bind("<Return>", lambda event: self.submit_answer())
 
         # Create the buttons.
-        submit_button = Button(self.question_window, text = "Submit", command = self.submit_answer, font = self.FONT_BUTTON, width = 10)
+        submit_button = Button(self.question_window, text = "Submit", command = self.submit_answer, font = self.FONT_BUTTON, bg = self.BUTTON_BACKGROUND, fg = self.BUTTON_FOREGROUND, activebackground = self.BUTTON_ACTIVE_BACKGROUND, width = 10)
         self.questions_canvas.create_window(250, 260, window = submit_button)
 
-        quit_button = Button(self.question_window, text = "Quit", command = self.quit_button, font = self.FONT_BUTTON, width = 10)
+        quit_button = Button(self.question_window, text = "Quit", command = self.quit_button, font = self.FONT_BUTTON, bg = self.BUTTON_BACKGROUND, fg = self.BUTTON_FOREGROUND, activebackground = self.BUTTON_ACTIVE_BACKGROUND, width = 10)
         self.questions_canvas.create_window(250, 320, window = quit_button)
 
         # Create the timer directly on the canvas.
-        self.timer_text = self.questions_canvas.create_text(250, 360, text = "Time Left: 10s", font = self.FONT_LABEL)
+        self.timer_text = self.questions_canvas.create_text(250, 360, text = "Time Left: 30s", font = self.FONT_LABEL)
 
         # Start the timer.
         self.update_timer()
@@ -260,10 +264,10 @@ class MathsQuiz:
         self.leaderboard_canvas.create_image(0, 0, image = self.leaderboard_background_colour, anchor = "nw")
 
         # Create the labels.
-        self.leaderboard_canvas.create_text(250, 60, text = "Leaderboard", font = self.FONT_HEADER)
-        self.leaderboard_canvas.create_text(175, 100, text = "Rank", font = self.LEADERBOARD_LABEL, anchor = "e")
-        self.leaderboard_canvas.create_text(210, 100, text = "Name", font = self.LEADERBOARD_LABEL,  anchor = "w")
-        self.leaderboard_canvas.create_text(350, 100, text = "Score", font = self.LEADERBOARD_LABEL)
+        self.leaderboard_canvas.create_text(250, 60, text = "Leaderboard", font = self.FONT_HEADER, fill = self.TEXT_COLOUR)
+        self.leaderboard_canvas.create_text(175, 100, text = "Rank", font = self.LEADERBOARD_LABEL, fill = self.TEXT_COLOUR, anchor = "e")
+        self.leaderboard_canvas.create_text(210, 100, text = "Name", font = self.LEADERBOARD_LABEL, fill = self.TEXT_COLOUR,  anchor = "w")
+        self.leaderboard_canvas.create_text(350, 100, text = "Score", font = self.LEADERBOARD_LABEL, fill = self.TEXT_COLOUR)
 
         # Get the top scores from the csv file.
         top_10 = self.leaderboard.get_top_scores()
@@ -276,13 +280,13 @@ class MathsQuiz:
             self.leaderboard_canvas.create_text(350, y_position, text = str(score), font = self.FONT_LABEL, anchor = "center")
 
         # Create the buttons.
-        restart_button = Button(self.leaderboard_window, text = "Restart", command = self.restart_quiz, font = self.FONT_BUTTON, width = 10)
+        restart_button = Button(self.leaderboard_window, text = "Restart", command = self.restart_quiz, font = self.FONT_BUTTON, bg = self.BUTTON_BACKGROUND, fg = self.BUTTON_FOREGROUND, activebackground = self.BUTTON_ACTIVE_BACKGROUND, width = 10)
         self.leaderboard_canvas.create_window(100, 350, window = restart_button)
 
-        quit_button = Button(self.leaderboard_window, text = "Quit", command = self.quit_button, font = self.FONT_BUTTON, width = 10)
+        quit_button = Button(self.leaderboard_window, text = "Quit", command = self.quit_button, font = self.FONT_BUTTON, bg = self.BUTTON_BACKGROUND, fg = self.BUTTON_FOREGROUND, activebackground = self.BUTTON_ACTIVE_BACKGROUND, width = 10)
         self.leaderboard_canvas.create_window(250, 350, window = quit_button)
 
-        show_answers_button = Button(self.leaderboard_window, text = "Answers", command = self.show_answers, font = self.FONT_BUTTON, width = 10)
+        show_answers_button = Button(self.leaderboard_window, text = "Answers", command = self.show_answers, font = self.FONT_BUTTON, bg = self.BUTTON_BACKGROUND, fg = self.BUTTON_FOREGROUND, activebackground = self.BUTTON_ACTIVE_BACKGROUND, width = 10)
         self.leaderboard_canvas.create_window(400, 350, window = show_answers_button)
         
 
@@ -348,7 +352,7 @@ class MathsQuiz:
             self.question_window.after_cancel(self.timer_id)
  
         # Show the user their score.
-        messagebox.showinfo("Score", f"Your score is {self.score} out of {self.questions_answered} questions answered.")
+        messagebox.showinfo("Score", f"Your score is {self.score} out of {self.questions_answered}")
 
         # Save the score to a CSV file.
         self.leaderboard.save_score(self.name_entry.get().title(), self.score)
@@ -367,7 +371,7 @@ class MathsQuiz:
         # Reset variables.
         self.score = 0
         self.questions_answered = 0
-        self.time_left = 10
+        self.time_left = 30
         self.answer_log = []
 
         # This hides the question, leaderboard, and answers window and unhides the instructions window.
@@ -394,8 +398,8 @@ class MathsQuiz:
         # This capitalises the name entry.
         name = self.name_entry.get().title()
 
-        # Checks if the name is an alphabet.
-        if name.replace(" ", "").replace("-", "").replace("'", "").isalpha():
+        # Checks if the name is an alphabet and less than 20 characters.
+        if name.replace(" ", "").replace("-", "").replace("'", "").isalpha() and len(name) < 20:
             # If the name is valid, create the next window.
             self.create_difficulty_window()
 
